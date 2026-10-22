@@ -1,0 +1,26 @@
+{
+  "description": "Synthetic schema illustration only, not benchmark data",
+  "split": [
+    {
+      "id": "synthetic-q1",
+      "question": "Which city contains the Example Museum?",
+      "reference": ["Example City"],
+      "contexts": [
+        {"title": "Example Museum", "text": "The Example Museum is in Example City.", "is_supporting": true},
+        {"title": "Example Park", "text": "Example Park opened in 2001.", "is_supporting": false}
+      ]
+    }
+  ],
+  "corpus": [
+    {"title": "Example Museum", "text": "The Example Museum is in Example City."},
+    {"title": "Example Park", "text": "Example Park opened in 2001."}
+  ],
+  "query_cache": {
+    "Which city contains the Example Museum?": {"raw_triples": [["Example Museum", "located in", "?"]]}
+  },
+  "openie": {
+    "docs": [
+      {"idx": "chunk-CONTENT_MD5", "passage": "Example Museum\nThe Example Museum is in Example City.", "extracted_entities": ["Example Museum", "Example City"], "extracted_triples": [["Example Museum", "located in", "Example City"]]}
+    ]
+  }
+}

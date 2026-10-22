@@ -1,0 +1,10 @@
+{
+  "downloaded_by_release_builder": false,
+  "sources": {
+    "2wikimultihopqa": {"source": "https://github.com/Alab-NII/2wikimultihop", "train": "train.json", "dev": "dev.json", "license": "Obtain and follow the upstream dataset and underlying content licenses."},
+    "hotpotqa": {"source": "https://hotpotqa.github.io/", "train": "hotpot_train_v1.1.json", "dev": "hotpot_dev_distractor_v1.json", "license": "Follow the HotpotQA distribution terms and Wikipedia content license."},
+    "musique": {"source": "https://github.com/StonyBrookNLP/musique", "train": "musique_ans_v1.0_train.jsonl", "dev": "musique_ans_v1.0_dev.jsonl", "license": "Follow the MuSiQue release and underlying Wikipedia content licenses."},
+    "mrqa_nq_fixed_1k": {"source": "https://github.com/mrqa/MRQA-Shared-Task-2019", "train": "NaturalQuestionsShort_train.jsonl.gz", "dev": "NaturalQuestionsShort_dev.jsonl.gz", "header_dataset": "NaturalQuestionsShort", "license": "Follow MRQA and original Natural Questions/underlying content terms."},
+    "mrqa_triviaqa_1k": {"source": "https://github.com/mrqa/MRQA-Shared-Task-2019", "train": "TriviaQA_train.jsonl.gz", "dev": "TriviaQA_dev.jsonl.gz", "header_dataset": "TriviaQA-web", "historical_raw_md5": {"train": "e18f586152612a9358c22f5536bfd32a", "dev": "5c9fdc633dfe196f1b428c81205fd82f"}, "license": "Follow MRQA, TriviaQA, and the original web-source content terms.", "scope": "Supplementary paper dataset (Appendix B.4); no new experiment is included in this release build."}
+  }
+}

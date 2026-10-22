@@ -1,0 +1,15 @@
+# Observed CPU validation environment, not a portable lock.
+numpy==1.26.4
+pandas==2.2.3
+pyarrow==20.0.0
+torch==2.9.0
+transformers==4.57.5
+accelerate==1.7.0
+igraph==0.11.8
+openai==2.15.0
+httpx==0.28.1
+filelock==3.18.0
+packaging==25.0
+tenacity==8.5.0
+tqdm==4.67.1
+ijson==3.4.0.post0

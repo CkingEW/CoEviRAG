@@ -1,0 +1,18 @@
+CoEviRAG release
+
+This is a selected and modified distribution of the RePairRAG implementation.
+The release uses the coevirag package and CoEviRAG main class; network
+parameter names and state-dict layouts are unchanged.
+The source distribution supplies the Apache License, Version 2.0, reproduced
+unchanged in LICENSE.txt. This notice does not assign new ownership to upstream
+work or license third-party datasets, model weights, or hosted services.
+
+The upstream README credits graph-construction methods to HippoRAG:
+https://github.com/OSU-NLP-Group/HippoRAG
+Retained graph, storage, prompt, embedding, and API utilities preserve that
+attribution. See RELEASE_PROVENANCE.json for source paths, hashes, and changes.
+
+Modified Python files carry CoEviRAG release notices. The distribution removes
+standalone repair generation/verification, alternative backends, baseline
+programs, and exploratory runners; shared compatibility helpers are documented
+in docs/RELEASE.md. No upstream copyright notice has been intentionally removed.

@@ -1,0 +1,12 @@
+{
+  "dataset": "hotpotqa",
+  "seed": 42,
+  "device": "cuda",
+  "llm_name": "openai/gpt-oss-120b",
+  "llm_base_url": "https://openrouter.ai/api/v1",
+  "policy_epochs": 20,
+  "tail_epochs": 30,
+  "initial_selector_epochs": 20,
+  "multistate_epochs": 20,
+  "progress_normalization_root": null
+}

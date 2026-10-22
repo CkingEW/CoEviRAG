@@ -1,0 +1,389 @@
+{
+  "included_weights_or_caches": false,
+  "public_download": null,
+  "availability": "Local source references only; no publication asserted",
+  "evidence_source": "outputs/progress53_uniform_test_20261005/frozen_manifest.json",
+  "primary_datasets": {
+    "2wikimultihopqa": {
+      "selector_best_epoch": 18,
+      "selector_config": {
+        "root": "outputs/progress53_uniform_selector_20261005",
+        "cache_root": "outputs/mixed_backend_dpr_all_20261003",
+        "datasets": [
+          "2wikimultihopqa",
+          "hotpotqa",
+          "musique"
+        ],
+        "mode": "multistate",
+        "state_reduction": "uniform",
+        "progress_features": true,
+        "progress_normalization_root": "outputs/progress53_selector_20261005",
+        "epochs": 20,
+        "batch_size": 32,
+        "seed": 42,
+        "device": "cuda",
+        "train_limit": 0,
+        "val_limit": 0
+      },
+      "summary_source": "outputs/progress53_uniform_selector_20261005/2wikimultihopqa/summary.json",
+      "files": {
+        "fact_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_2wikimultihopqa_full_seed42/best_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "b5e754ed5d16314ed80ae340a9838db1655ad9fac2f6fda8c045986b8ef4b3e6",
+          "bytes": 31216264
+        },
+        "paragraph_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_2wikimultihopqa_full_seed42/best_paragraph_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "b17203e782e6ee19b91288be731e3598c3558a36f8283a3eb28bb4c48ae36dfa",
+          "bytes": 31216454
+        },
+        "tail60": {
+          "source_relative_path": "outputs/independent_backend_dpr_all_20261003/2wikimultihopqa/independent_tail_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "ccb6aa30cfd903cd03c4adc1a35b0d1f9d72f3a4930dd7d044318c6ccf36b852",
+          "bytes": 8021
+        },
+        "initial_selector51": {
+          "source_relative_path": "outputs/independent_backend_dpr_all_20261003/2wikimultihopqa/independent_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "97be18d916e79ef13fce87c67e80834bb0678ab53db53f6c51ca03762868a62a",
+          "bytes": 7429
+        },
+        "selector53": {
+          "source_relative_path": "outputs/progress53_uniform_selector_20261005/2wikimultihopqa/multistate_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "e8351753979647f2037f299533c2e176cf08a82088ebbae107103f372d9dd68b",
+          "bytes": 8121
+        },
+        "training_only_progress_statistics": {
+          "source_relative_path": "outputs/progress53_selector_20261005/2wikimultihopqa/multistate_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "276b8f6b115d7d6f8b50531c928f21e947bcf3b7bfbabf809e9854681065de7d",
+          "bytes": 7993
+        }
+      },
+      "normalization_reuse": true,
+      "recorded_frozen_input_hashes": {
+        "selector": {
+          "path": "outputs/progress53_uniform_selector_20261005/2wikimultihopqa/multistate_selector_seed42.pth",
+          "sha256": "e8351753979647f2037f299533c2e176cf08a82088ebbae107103f372d9dd68b"
+        },
+        "tail": {
+          "path": "outputs/independent_backend_dpr_all_20261003/2wikimultihopqa/independent_tail_seed42.pth",
+          "sha256": "ccb6aa30cfd903cd03c4adc1a35b0d1f9d72f3a4930dd7d044318c6ccf36b852"
+        },
+        "component_cache": {
+          "path": "outputs/unified_v1/2wikimultihopqa/test1000_components_seed42.json.gz",
+          "sha256": "c400a23477f52f5973020ad5860a6cce5c14991ed0979feb8f7f41fe859e5691"
+        },
+        "dpr_cache": {
+          "path": "outputs/independent_backend_test_20261004/2wikimultihopqa/dpr_top200.npz",
+          "sha256": "10fafd2cb28e60a3d317e2879a270f297f7ec7edbdfe2eb44b46dfbf45a61540"
+        },
+        "query_plan": {
+          "path": "outputs/2wikimultihopqa/query_triplets_cache.json",
+          "sha256": "7c80761310ae44ad4531c5a434d4d3e0aa7db22dfaef3fbff728c79650c6f642"
+        },
+        "openie": {
+          "path": "outputs/2wikimultihopqa/openie_results_ner_openai_gpt-oss-120b.json",
+          "sha256": "6075bdd55682a9a7bcc01d22108446d01f1a182299974a00eedbd2901b5ab3ca"
+        },
+        "train": {
+          "path": "datasets/2wikimultihopqa/train.json",
+          "sha256": "64d4945cbad33d9e01a04da659d7107f4f78d61605a8d0066b63f73d65064a02"
+        },
+        "val": {
+          "path": "datasets/2wikimultihopqa/val.json",
+          "sha256": "ee70d8c2730a02b54283c7d962a8c20a049f647ba2c7719d302b2e120050d76e"
+        },
+        "test": {
+          "path": "datasets/2wikimultihopqa/test.json",
+          "sha256": "e89517402d67e5de1b0701763d92347495a9391c8f0b317851b1259e867e82ba"
+        }
+      },
+      "recorded_hash_scope": "Copied metadata; large text/cache artifacts were not reopened for hash verification"
+    },
+    "hotpotqa": {
+      "selector_best_epoch": 12,
+      "selector_config": {
+        "root": "outputs/progress53_uniform_selector_20261005",
+        "cache_root": "outputs/mixed_backend_dpr_all_20261003",
+        "datasets": [
+          "2wikimultihopqa",
+          "hotpotqa",
+          "musique"
+        ],
+        "mode": "multistate",
+        "state_reduction": "uniform",
+        "progress_features": true,
+        "progress_normalization_root": "outputs/progress53_selector_20261005",
+        "epochs": 20,
+        "batch_size": 32,
+        "seed": 42,
+        "device": "cuda",
+        "train_limit": 0,
+        "val_limit": 0
+      },
+      "summary_source": "outputs/progress53_uniform_selector_20261005/hotpotqa/summary.json",
+      "files": {
+        "fact_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_hotpotqa_full_seed42/best_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "7af239a03e6baa7d431742b8ed95bb40e6cf805aa266bd6958c39977a7d05071",
+          "bytes": 31216264
+        },
+        "paragraph_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_hotpotqa_full_seed42/best_paragraph_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "a87b30ec3204c21dd6f30c5853e1d5b4b124cf05db5100ccf1876ac1e3b4ba39",
+          "bytes": 31216454
+        },
+        "tail60": {
+          "source_relative_path": "outputs/independent_backend_dpr_all_20261003/hotpotqa/independent_tail_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "c276efb2e125b2f1cf6d2da680735e501fc681448b726b4f7133b11703f6476a",
+          "bytes": 8021
+        },
+        "initial_selector51": {
+          "source_relative_path": "outputs/independent_backend_dpr_all_20261003/hotpotqa/independent_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "54bb152bbae50cd91a44265da3c09f67a85c73861cbeb859c583740795be7244",
+          "bytes": 7429
+        },
+        "selector53": {
+          "source_relative_path": "outputs/progress53_uniform_selector_20261005/hotpotqa/multistate_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "5a69705775c8743f3e53a4e144a1b4a6677a61d96c8a15b1cc8688dbdadcb077",
+          "bytes": 8121
+        },
+        "training_only_progress_statistics": {
+          "source_relative_path": "outputs/progress53_selector_20261005/hotpotqa/multistate_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "6eda3c4113f4fe59c3a14a1cebe092e15f773caf55319524e0612bfee0c98150",
+          "bytes": 7993
+        }
+      },
+      "normalization_reuse": true,
+      "recorded_frozen_input_hashes": {
+        "selector": {
+          "path": "outputs/progress53_uniform_selector_20261005/hotpotqa/multistate_selector_seed42.pth",
+          "sha256": "5a69705775c8743f3e53a4e144a1b4a6677a61d96c8a15b1cc8688dbdadcb077"
+        },
+        "tail": {
+          "path": "outputs/independent_backend_dpr_all_20261003/hotpotqa/independent_tail_seed42.pth",
+          "sha256": "c276efb2e125b2f1cf6d2da680735e501fc681448b726b4f7133b11703f6476a"
+        },
+        "component_cache": {
+          "path": "outputs/unified_v1/hotpotqa/test1000_components_seed42.json.gz",
+          "sha256": "d3069e5c3c0d2b3b0eb2f79f2dae8b83b770b34810707dd7a92f29c6fb47f1aa"
+        },
+        "dpr_cache": {
+          "path": "outputs/independent_backend_test_20261004/hotpotqa/dpr_top200.npz",
+          "sha256": "13d5906fffc73ad2d34a20d5a2901f4d67ca36e1bf815f0599aee469cbc66431"
+        },
+        "query_plan": {
+          "path": "outputs/hotpotqa/query_triplets_cache.json",
+          "sha256": "b43bccbb75ce99c812a82992164637ede7c1972cf6db80d3a26adf6b3620f763"
+        },
+        "openie": {
+          "path": "outputs/hotpotqa/openie_results_ner_openai_gpt-oss-120b.json",
+          "sha256": "e88152520bc49cfcb0d7d68c46e39027897c32a864df326e5d308f7b4f94e984"
+        },
+        "train": {
+          "path": "datasets/hotpotqa/train.json",
+          "sha256": "9bf26f055f773ae4bf0f9a8edb76afb7fcf2c9df3fada6a011022997b0737c53"
+        },
+        "val": {
+          "path": "datasets/hotpotqa/val.json",
+          "sha256": "41bab015b8fb1df3234f9390b99441e964410ba1f637d9c3aff5f7fd5a8b1d8c"
+        },
+        "test": {
+          "path": "datasets/hotpotqa/test.json",
+          "sha256": "1df7861f4e98869d31db2ac8fbb46ffd0d84fc7dbd936e37be8b6e344fd27413"
+        }
+      },
+      "recorded_hash_scope": "Copied metadata; large text/cache artifacts were not reopened for hash verification"
+    },
+    "musique": {
+      "selector_best_epoch": 20,
+      "selector_config": {
+        "root": "outputs/progress53_uniform_selector_20261005",
+        "cache_root": "outputs/mixed_backend_dpr_all_20261003",
+        "datasets": [
+          "2wikimultihopqa",
+          "hotpotqa",
+          "musique"
+        ],
+        "mode": "multistate",
+        "state_reduction": "uniform",
+        "progress_features": true,
+        "progress_normalization_root": "outputs/progress53_selector_20261005",
+        "epochs": 20,
+        "batch_size": 32,
+        "seed": 42,
+        "device": "cuda",
+        "train_limit": 0,
+        "val_limit": 0
+      },
+      "summary_source": "outputs/progress53_uniform_selector_20261005/musique/summary.json",
+      "files": {
+        "fact_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_musique_full_seed42/best_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "5c87655eece450dbcd301fbd630f3ee966ac1a3138af1b96dc298239d11cdfd1",
+          "bytes": 31216264
+        },
+        "paragraph_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_musique_full_seed42/best_paragraph_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "5703b4409abbbec6f5b42dc05b31d296f5ec9710b24729e6cb23a519663fb97a",
+          "bytes": 31216454
+        },
+        "tail60": {
+          "source_relative_path": "outputs/independent_backend_dpr_all_20261003/musique/independent_tail_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "253e0f36edee97fd8beab70628f9dcb6957f6f4b5474bde845a40eea6c5c0bd2",
+          "bytes": 8021
+        },
+        "initial_selector51": {
+          "source_relative_path": "outputs/independent_backend_dpr_all_20261003/musique/independent_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "e6d0176e00427b43241b0bd545dd4997de1c3175f6798b8068519e8eb7ff9098",
+          "bytes": 7429
+        },
+        "selector53": {
+          "source_relative_path": "outputs/progress53_uniform_selector_20261005/musique/multistate_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "2ebfa8c51768f09075fdf32e2f6824b7d8fb07c170be0a5d2193935de66a1cbf",
+          "bytes": 8121
+        },
+        "training_only_progress_statistics": {
+          "source_relative_path": "outputs/progress53_selector_20261005/musique/multistate_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "8173251c518610fdd9058b93b56073be2de75ae40c097797e7117d0ff2f71328",
+          "bytes": 7993
+        }
+      },
+      "normalization_reuse": true,
+      "recorded_frozen_input_hashes": {
+        "selector": {
+          "path": "outputs/progress53_uniform_selector_20261005/musique/multistate_selector_seed42.pth",
+          "sha256": "2ebfa8c51768f09075fdf32e2f6824b7d8fb07c170be0a5d2193935de66a1cbf"
+        },
+        "tail": {
+          "path": "outputs/independent_backend_dpr_all_20261003/musique/independent_tail_seed42.pth",
+          "sha256": "253e0f36edee97fd8beab70628f9dcb6957f6f4b5474bde845a40eea6c5c0bd2"
+        },
+        "component_cache": {
+          "path": "outputs/unified_v1/musique/test1000_components_seed42.json.gz",
+          "sha256": "f446f9fde09b4caa8704f9bfcbbd13ab90aef2ea1ee61fc650a5e303fa8945d6"
+        },
+        "dpr_cache": {
+          "path": "outputs/independent_backend_test_20261004/musique/dpr_top200.npz",
+          "sha256": "f5ecfe8c240f063b3b6e498fc8000a83f004d8bb3089e58a8c74daff3e230c56"
+        },
+        "query_plan": {
+          "path": "outputs/musique/query_triplets_cache.json",
+          "sha256": "4144bd205a690ebb5418a705f4ac2aa863069e9f1c9d3acbabd86aaffd809906"
+        },
+        "openie": {
+          "path": "outputs/musique/openie_results_ner_openai_gpt-oss-120b.json",
+          "sha256": "f9e6210c28d4fb8ec866ffb8680df6178939940057000555cd44a5b5d6acf9f1"
+        },
+        "train": {
+          "path": "datasets/musique/train.json",
+          "sha256": "04637c6e77666a380a65985a45c468d8a68cc5900cc5f1befa0a112a4ffb88ef"
+        },
+        "val": {
+          "path": "datasets/musique/val.json",
+          "sha256": "b18544aca97bc1db598b84cc01687f4c9538410756e753e8350fe1149658119d"
+        },
+        "test": {
+          "path": "datasets/musique/test.json",
+          "sha256": "641fb0a3b3510a0d64b05d21e79c2e281b5a16292512804dbb390b7eb1b9c978"
+        }
+      },
+      "recorded_hash_scope": "Copied metadata; large text/cache artifacts were not reopened for hash verification"
+    },
+    "mrqa_nq_fixed_1k": {
+      "selector_best_epoch": 3,
+      "selector_config": {
+        "root": "outputs/nq_formal_20261009/selector",
+        "cache_root": "outputs/nq_formal_20261009/cache",
+        "train_limit": 0,
+        "val_limit": 0,
+        "mode": "multistate",
+        "dynamic_query_plan": false,
+        "dynamic_plan_normalization": "training",
+        "progress_features": true,
+        "progress_normalization_root": null,
+        "state_reduction": "uniform",
+        "ablate_query_plan_features": false,
+        "device": "cuda",
+        "seed": 42,
+        "epochs": 20,
+        "batch_size": 32
+      },
+      "summary_source": "outputs/nq_formal_20261009/selector/mrqa_nq_fixed_1k/summary.json",
+      "files": {
+        "fact_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_mrqa_nq_fixed_1k_full_seed42/best_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "4778a0380dc5cf7e7ac9d8bb1f75847a0702cb8a9e9dd4a99b4dc0054150d8c4",
+          "bytes": 31216264
+        },
+        "paragraph_policy": {
+          "source_relative_path": "outputs/policy_runs/unified_v1_mrqa_nq_fixed_1k_full_seed42/best_paragraph_policy.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "6dfe25385caa92b715380e9a7e4c3c7681c9ea1d397c66ef0b3488c169902a52",
+          "bytes": 31216454
+        },
+        "tail60": {
+          "source_relative_path": "outputs/nq_formal_20261009/backend/mrqa_nq_fixed_1k/independent_tail_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "e94aba92b66598a3faf40a0fc0f43db058734c242c760745e8e55ae67ecd3289",
+          "bytes": 8021
+        },
+        "initial_selector51": {
+          "source_relative_path": "outputs/nq_formal_20261009/backend/mrqa_nq_fixed_1k/independent_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "eda4c05e06f95b696e908a072ae97737dedbe37f069da007a800aba54bc1437d",
+          "bytes": 7429
+        },
+        "selector53": {
+          "source_relative_path": "outputs/nq_formal_20261009/selector/mrqa_nq_fixed_1k/multistate_selector_seed42.pth",
+          "included": false,
+          "exists_locally": true,
+          "sha256": "9061eb5ef5cc38f5a1117bbfe12c44de023b26af5e32177029163cb5691b1706",
+          "bytes": 7993
+        }
+      },
+      "normalization_reuse": false
+    }
+  },
+  "supplementary_triviaqa": "Data IDs/adapter/fingerprints included; runtime artifact selection not audited"
+}

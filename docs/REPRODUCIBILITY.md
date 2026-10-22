@@ -80,6 +80,12 @@ python coevirag.py retrieve --dry-run
 Tests use synthetic data, CPU tensors, and mocked constructors; they do not
 load pretrained models or call APIs. `tests/validate_release.py` additionally
 checks a clean exported tree without Git metadata or generated files.
-The recorded checks are in `RELEASE_VALIDATION.json`; source-file provenance
-is recorded in `RELEASE_PROVENANCE.json`. These checks do not establish a
-complete end-to-end reproduction of the benchmark experiments.
+These checks verify software interfaces and synthetic examples, rather than
+a complete end-to-end reproduction of the benchmark experiments.
+
+## Scope And Compatibility
+
+The main pipeline uses fixed RQRs and does not enable KG repair or dynamic
+query binding. Shared feature records retain inactive compatibility fields
+such as `repair` and `ppr`; some shared helper names also reflect earlier
+interfaces. These fields do not add a repair stage to CoEviRAG.

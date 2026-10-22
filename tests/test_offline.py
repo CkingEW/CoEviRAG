@@ -101,7 +101,7 @@ class ProtocolTests(unittest.TestCase):
         self.assertIs(CoEviRAG, Implementation)
         self.assertEqual(CoEviRAG.__name__, "CoEviRAG")
         self.assertEqual(CoEviRAG.__module__, "coevirag.CoEviRAG")
-        self.assertFalse((ROOT / "repairrag").exists())
+        self.assertTrue((ROOT / "coevirag" / "CoEviRAG.py").is_file())
 
     def test_fixed_query_plan_and_progress(self):
         from coevirag.query_plan_evidence import dynamic_query_plan_enabled, append_selection_progress

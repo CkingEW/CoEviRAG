@@ -103,7 +103,6 @@ for full templates and generation settings.
 - [Data preparation and formats](docs/DATA.md)
 - [Reproducibility, checkpoints, and offline tests](docs/REPRODUCIBILITY.md)
 - [Prompt templates](docs/PROMPTS.md)
-- [Release scope and compatibility](docs/RELEASE.md)
 
 Use `python coevirag.py STAGE --dry-run` to preview a command without
 executing it. The Python API is available as:

@@ -5,6 +5,29 @@ The adapter never downloads or embeds benchmark text in this distribution.
 IDs/fingerprints are the paper snapshot; synthetic examples are in
 `examples/schema.json`.
 
+## Sources And Ordered Splits
+
+The main runtime uses `2wikimultihopqa`, `hotpotqa`, `musique`, and
+`mrqa_nq_fixed_1k`. The adapter also supports supplementary
+`mrqa_triviaqa_1k`; its runtime/checkpoint configuration was not audited in
+this release. Raw files are supplied by the user rather than downloaded
+automatically.
+
+`reproducibility/split_membership.json` contains the ordered identifiers for
+1,000/100/1,000 train/validation/test questions per collection. Training and
+validation use released training data; testing uses development data.
+The adapter recovers those identifiers instead of rerunning historical
+sampling or requiring private exclusion lists. Ordered IDs and normalized
+questions are checked for cross-split disjointness. The MuSiQue training
+split has 1,000 IDs and 999 distinct normalized questions; within-split
+multiplicity is preserved.
+
+MRQA collections retain the full supplied context and use one labeled
+support per question. They are fixed-corpus adaptations rather than
+full-Wikipedia NQ or official full-corpus TriviaQA evaluations.
+
+## Formats And Reconstruction
+
 All split arrays are ordered. `id` is a string, `question` a string,
 `reference` an array of accepted answers, and `contexts` an array of
 `{title: string, text: string, is_supporting: boolean}`. NQ additionally keeps
@@ -30,6 +53,8 @@ has **not** been verified. The adapter reports expected versus actual SHA-256
 per file and can require all byte matches. Changed upstream releases, record
 occurrence differences, and transformed raw archives must not be described as
 byte-identical just because IDs match.
+The generated `reconstruction_report.json` reports each file's `byte_match`;
+pass `--require_byte_match` to require all recorded fingerprints to match.
 
 Query RQR JSON maps the exact question string to an object with `raw_triples`
 and the source bookkeeping fields (`original_query`, `extracted_triplets`,

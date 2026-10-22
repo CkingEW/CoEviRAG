@@ -649,6 +649,7 @@
     "docs/DATA.md",
     "docs/PROMPTS.md",
     "docs/RELEASE.md",
+    "docs/REPRODUCIBILITY.md",
     "examples/schema.json",
     "pyproject.toml",
     "requirements-tested.txt",

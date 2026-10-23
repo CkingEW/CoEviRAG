@@ -12,6 +12,47 @@ STAGES = ("index", "train-policies", "queries", "export", "dense", "safety",
           "train-backend", "train-selector", "retrieve", "qa")
 
 
+def workflow_steps(stage, split="test", stage_only=False, with_qa=False):
+    if stage_only and with_qa:
+        raise ValueError("--stage-only and --with-qa cannot be combined")
+    if (stage_only or with_qa) and stage != "retrieve":
+        raise ValueError("--stage-only and --with-qa apply only to retrieve")
+    if stage == "train":
+        return [("index", "train"), ("train-policies", "train"),
+                ("queries", "train"), ("queries", "val"),
+                ("export", "train"), ("export", "val"),
+                ("dense", "val"), ("safety", "val"),
+                ("train-backend", "val"), ("train-selector", "val")]
+    if stage not in STAGES:
+        raise ValueError("Unknown stage")
+    if stage == "retrieve":
+        if split == "train":
+            raise ValueError("Retrieval supports val or test; use export for training features")
+        steps = ([("retrieve", split)] if stage_only else
+                 [(name, split) for name in ("queries", "export", "dense", "safety", "retrieve")])
+        return steps + ([("qa", split)] if with_qa else [])
+    return [(stage, split)]
+
+
+def validate_workflow(stage, config, stage_only=False):
+    dataset = config["dataset"]
+    if stage == "train":
+        histories = [ROOT / "outputs/backend" / dataset / "tail_history.json",
+                     ROOT / "outputs/selector" / dataset / "selector_history.json"]
+        if any(path.exists() for path in histories):
+            raise ValueError("Ranking training outputs already exist. Use individual stages to "
+                             "continue an interrupted run; move previous outputs before a fresh run.")
+    if stage == "retrieve" and not stage_only:
+        checkpoints = [ROOT / "outputs/policies" / dataset / name
+                       for name in ("best_policy.pth", "best_paragraph_policy.pth")]
+        checkpoints += [ROOT / "outputs/backend" / dataset / "independent_tail_seed42.pth",
+                        ROOT / "outputs/selector" / dataset / "multistate_selector_seed42.pth"]
+        missing = [str(path.relative_to(ROOT)) for path in checkpoints if not path.is_file()]
+        if missing:
+            raise ValueError("Run train or restore the trained checkpoints before retrieve. Missing: "
+                             + ", ".join(missing))
+
+
 def stage_command(stage, config, split):
     d, seed = config["dataset"], config["seed"]
     if d not in DATASETS or seed != 42:
@@ -109,11 +150,18 @@ def stage_command(stage, config, split):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("stage", choices=STAGES)
+    parser.add_argument("stage", choices=("train", *STAGES),
+                        help="train runs the full training workflow; retrieve prepares caches and ranks passages")
     parser.add_argument("--config", type=Path, default=ROOT / "configs/final.json")
     parser.add_argument("--dataset", choices=DATASETS)
-    parser.add_argument("--split", choices=("train", "val", "test"), default="test")
-    parser.add_argument("--dry-run", action="store_true", help="Print JSON command only; do not execute the stage")
+    parser.add_argument("--split", choices=("train", "val", "test"),
+                        help="Question split (default: test); train always uses train and val")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--stage-only", action="store_true",
+                       help="For retrieve, rank existing caches without rebuilding candidates")
+    modes.add_argument("--with-qa", action="store_true",
+                       help="For retrieve, also generate answers and evaluate QA")
+    parser.add_argument("--dry-run", action="store_true", help="Print JSON commands without executing them")
     args = parser.parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8"))
     allowed = {"dataset", "seed", "device", "llm_name", "llm_base_url", "policy_epochs", "tail_epochs",
@@ -122,16 +170,32 @@ def main():
         parser.error("Unknown configuration keys are rejected")
     if args.dataset:
         config["dataset"] = args.dataset
-    command = [sys.executable, *stage_command(args.stage, config, args.split)]
+    if args.stage == "train" and args.split is not None:
+        parser.error("train uses both train and val; omit --split")
+    try:
+        steps = workflow_steps(args.stage, args.split or "test", args.stage_only, args.with_qa)
+        commands = [dict(stage=stage, split=split,
+                         command=[sys.executable, *stage_command(stage, config, split)])
+                    for stage, split in steps]
+    except ValueError as error:
+        parser.error(str(error))
     if args.dry_run:
-        print(json.dumps(dict(stage=args.stage, command=command), indent=2))
+        result = (dict(stage=args.stage, command=commands[0]["command"]) if len(commands) == 1
+                  else dict(stage=args.stage, dataset=config["dataset"], steps=commands))
+        print(json.dumps(result, indent=2))
         return
+    try:
+        validate_workflow(args.stage, config, args.stage_only)
+    except ValueError as error:
+        parser.error(str(error))
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(ROOT) + os.pathsep + environment.get("PYTHONPATH", "")
     environment.setdefault("CUDA_VISIBLE_DEVICES", "1")
     environment.setdefault("PYTHONHASHSEED", "42")
     environment.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
-    subprocess.run(command, cwd=ROOT, env=environment, check=True)
+    for index, step in enumerate(commands, 1):
+        print(f"[{index}/{len(commands)}] {step['stage']} ({step['split']})", flush=True)
+        subprocess.run(step["command"], cwd=ROOT, env=environment, check=True)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,27 @@
+{
+  "description": "An original fictional world for testing the complete CoEviRAG workflow.",
+  "passages": [
+    {"title": "Aster Institute", "text": "Aster Institute is a research institute in the city of Linden."},
+    {"title": "Linden", "text": "Linden is a city in the country of Norland."},
+    {"title": "Beacon Observatory", "text": "Beacon Observatory is an astronomical observatory in the city of Cedar."},
+    {"title": "Cedar", "text": "Cedar is a city in the country of Eastmere."},
+    {"title": "Mira Sol", "text": "Mira Sol is a scientist who works at Aster Institute."},
+    {"title": "Jon Vale", "text": "Jon Vale is an astronomer who works at Beacon Observatory."},
+    {"title": "Orion Prize", "text": "The Orion Prize was founded by the scientist Mira Sol."},
+    {"title": "Vela Medal", "text": "The Vela Medal was created by the astronomer Jon Vale."}
+  ],
+  "splits": {
+    "train": [
+      {"id": "sample-train-1", "question": "In which country is Aster Institute located?", "reference": ["Norland"], "support_titles": ["Aster Institute", "Linden"]},
+      {"id": "sample-train-2", "question": "In which country is Beacon Observatory located?", "reference": ["Eastmere"], "support_titles": ["Beacon Observatory", "Cedar"]}
+    ],
+    "val": [
+      {"id": "sample-val-1", "question": "In which city does Mira Sol work?", "reference": ["Linden"], "support_titles": ["Mira Sol", "Aster Institute"]},
+      {"id": "sample-val-2", "question": "In which city does Jon Vale work?", "reference": ["Cedar"], "support_titles": ["Jon Vale", "Beacon Observatory"]}
+    ],
+    "test": [
+      {"id": "sample-test-1", "question": "At which institute does the founder of the Orion Prize work?", "reference": ["Aster Institute"], "support_titles": ["Orion Prize", "Mira Sol"]},
+      {"id": "sample-test-2", "question": "At which observatory does the creator of the Vela Medal work?", "reference": ["Beacon Observatory"], "support_titles": ["Vela Medal", "Jon Vale"]}
+    ]
+  }
+}

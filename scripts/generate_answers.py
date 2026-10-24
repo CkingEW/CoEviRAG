@@ -1,8 +1,7 @@
-# Modified for CoEviRAG: enforce the adopted Top-5 reader protocol.
+"""Generate and evaluate answers from the final retrieved evidence."""
 import argparse
 import json
 import os
-import re
 import sys
 import threading
 import time
@@ -123,7 +122,7 @@ def main() -> None:
         if " ".join(sample["question"].split()) != " ".join(retrieval["question"].split()):
             raise ValueError(f"Question mismatch: {sample['question']!r}")
 
-    save_dir = PROJECT_ROOT / "outputs" / args.dataset
+    save_dir = PROJECT_ROOT / "outputs" / args.dataset / "cache/index"
     config = BaseConfig(
         save_dir=str(save_dir),
         dataset=args.dataset,

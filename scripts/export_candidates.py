@@ -1,44 +1,23 @@
-# Modified for CoEviRAG: frozen candidate export only; no sweeps.
+"""Export frozen dual-agent candidates and training features."""
 import argparse
-
 import gzip
-
 import json
-
-import logging
-
-import os
-
 import random
-
 import sys
-
 import time
-
 from pathlib import Path
-
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
-
 import torch
-
 from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from coevirag.CoEviRAG import CoEviRAG
-
-from coevirag.prompts.linking import get_query_instruction
-
 from coevirag.utils.config_utils import BaseConfig
-
 from coevirag.utils.misc_utils import min_max_normalize
-
-logger = logging.getLogger(__name__)
-
-K_VALUES = [1, 2, 5, 10, 20, 30, 50, 100, 150, 200]
 
 def set_random_seed(seed: int) -> None:
     random.seed(seed)
@@ -151,24 +130,24 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--candidate_cache", default="")
-    parser.add_argument("--export_mixed_backend_cache", default="")
+    parser.add_argument("--training_cache", default="")
     parser.add_argument("--prepare_queries_only", action="store_true")
     args = parser.parse_args()
     from coevirag.release_protocol import DATASETS
     if args.dataset not in DATASETS:
         parser.error("Unsupported final-method dataset")
-    if not args.prepare_queries_only and bool(args.candidate_cache) == bool(args.export_mixed_backend_cache):
+    if not args.prepare_queries_only and bool(args.candidate_cache) == bool(args.training_cache):
         parser.error("Choose exactly one export format")
     set_random_seed(args.seed)
     args.graph_variant, args.fact_traversal_mode = "unified_v1", "role_aware"
-    args.query_cache_override = f"outputs/{args.dataset}/query_triplets_cache.json"
-    args.mixed_cache_start, args.mixed_cache_stop = 0, 0
+    args.query_cache_override = f"outputs/{args.dataset}/cache/index/query_triplets_cache.json"
+    args.cache_start, args.cache_stop = 0, 0
     args.openie_results_path = ""
     data = PROJECT_ROOT / "datasets" / args.dataset
     samples = json.loads((data / f"{args.eval_split}.json").read_text(encoding="utf-8"))
     corpus = json.loads((data / f"{args.dataset}_corpus.json").read_text(encoding="utf-8"))
     config = BaseConfig(
-        dataset=args.dataset, save_dir=f"outputs/{args.dataset}",
+        dataset=args.dataset, save_dir=f"outputs/{args.dataset}/cache/index",
         llm_name="openai/gpt-oss-120b", llm_base_url=args.llm_base_url,
         llm_reasoning_effort="low", max_new_tokens=1024,
         embedding_model_name="Qwen/Qwen3-Embedding-4B", embedding_batch_size=8,
@@ -199,9 +178,9 @@ def main():
     if not all(Path(p).is_file() for p in (rag.policy_network_path, rag.paragraph_policy_network_path)):
         raise FileNotFoundError("Both frozen policy checkpoints are required")
     rag.load_rl_agent(training=False)
-    if args.export_mixed_backend_cache:
-        from export_mixed_backend_cache import export_cache
-        export_cache(rag, build_components, queries, get_gold_docs(samples, args.dataset), args)
+    if args.training_cache:
+        from coevirag.ranking.export import export_training_cache
+        export_training_cache(rag, build_components, queries, get_gold_docs(samples, args.dataset), args)
     else:
         rows = []
         for query in tqdm(queries, desc="Exporting frozen components"):

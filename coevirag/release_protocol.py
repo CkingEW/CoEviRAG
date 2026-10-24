@@ -1,6 +1,7 @@
 """Release boundary checks; feature and navigation mathematics stay upstream."""
 
-DATASETS = ("2wikimultihopqa", "hotpotqa", "musique", "mrqa_nq_fixed_1k")
+BENCHMARK_DATASETS = ("2wikimultihopqa", "hotpotqa", "musique", "mrqa_nq_fixed_1k")
+DATASETS = (*BENCHMARK_DATASETS, "sample")
 
 
 def validate_selector(checkpoint, final=False):

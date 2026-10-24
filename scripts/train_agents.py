@@ -1,4 +1,4 @@
-# Modified for CoEviRAG: release scope, portable paths, or fixed-protocol guards.
+"""Construct the dual graphs and train Fact and Passage navigation agents."""
 import os
 import json
 import argparse
@@ -20,7 +20,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from coevirag.CoEviRAG import CoEviRAG
 from coevirag.utils.config_utils import BaseConfig
-from coevirag.utils.misc_utils import string_to_bool, compute_mdhash_id, min_max_normalize
+from coevirag.utils.misc_utils import string_to_bool, min_max_normalize
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -1254,7 +1254,7 @@ def main():
     set_random_seed(args.random_seed)
 
     dataset_name = args.dataset
-    save_dir = os.path.join(args.save_dir, dataset_name)
+    save_dir = os.path.join(args.save_dir, dataset_name, "cache", "index")
 
     # --- 1. Prepare Datasets ---
     dataset_output_dir = f"datasets/{dataset_name}"
@@ -1438,6 +1438,8 @@ def main():
         logger.info("OpenIE-only run completed; skipping graph retrieval setup and training.")
         return
     coevirag.prepare_retrieval_objects()
+    if not args.policy_run_dir:
+        args.policy_run_dir = os.path.join(args.save_dir, dataset_name, "models", "agents")
     if args.policy_run_dir:
         policy_run_dir = os.path.abspath(args.policy_run_dir)
         os.makedirs(policy_run_dir, exist_ok=True)

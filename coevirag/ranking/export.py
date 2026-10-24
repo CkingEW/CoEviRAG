@@ -1,19 +1,11 @@
-# Modified for CoEviRAG: release scope, portable paths, or fixed-protocol guards.
-"""Resumable, label-independent Dual + global DPR candidate export."""
-
+"""Export frozen dual-agent and global dense training candidates."""
 import hashlib
 import json
 import os
-import time
 from pathlib import Path
-
+import time
 import numpy as np
-
-from evidence_features import (
-    NO_TOP2_SELECTOR, candidate_features, candidate_pool,
-    current_query_features, multiscale_features,
-)
-from train_paragraph_evidence_ranker import paragraph_evidence_features
+from .features import build_candidate_features, candidate_pool
 
 
 def aligned_features(components, dpr_ids, dpr_scores, content_lookup, dpr_top_k=200):
@@ -35,13 +27,7 @@ def aligned_features(components, dpr_ids, dpr_scores, content_lookup, dpr_top_k=
         if passage not in selected:
             pool.append(record)
             selected.add(passage)
-    base = candidate_features(pool)
-    legacy = np.concatenate((base, np.broadcast_to(
-        current_query_features(components), (len(base), 27))), axis=1)
-    features = np.concatenate((
-        legacy[:, NO_TOP2_SELECTOR], paragraph_evidence_features(pool),
-        np.broadcast_to(multiscale_features(base, True), (len(base), 21)),
-    ), axis=1).astype(np.float32)
+    base, features = build_candidate_features(components, pool)
     ids = np.asarray([str(row["passage"]) for row in pool])
     contents = [content_lookup(passage) for passage in ids]
     return base, features, ids, contents
@@ -55,8 +41,8 @@ def file_digest(path):
     return digest.hexdigest()
 
 
-def export_cache(coevirag, build_components, queries, targets, args):
-    root = Path(args.export_mixed_backend_cache)
+def export_training_cache(coevirag, build_components, queries, targets, args):
+    root = Path(args.training_cache)
     root.mkdir(parents=True, exist_ok=True)
     identity = {
         "schema": "dual_dpr200_multiscale60_v1", "dataset": args.dataset,
@@ -78,8 +64,8 @@ def export_cache(coevirag, build_components, queries, targets, args):
             raise ValueError("Resume cache identity mismatch")
     else:
         manifest.write_text(json.dumps(identity, ensure_ascii=False, indent=2))
-    begin = args.mixed_cache_start
-    end = args.mixed_cache_stop or len(queries)
+    begin = args.cache_start
+    end = args.cache_stop or len(queries)
     if not 0 <= begin < end <= len(queries):
         raise ValueError("Invalid mixed cache shard interval")
     prefix_verified = False

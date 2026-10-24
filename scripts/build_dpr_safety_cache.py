@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-def build_cache(retrieval_path, split_path, embedding_store, output, top_k):
+def build_cache(retrieval_path, split_path, embedding_store, output, top_k, allow_small_corpus=False):
     if top_k <= 0:
         raise ValueError("top_k must be positive")
     samples = json.loads(split_path.read_text())
@@ -17,6 +17,10 @@ def build_cache(retrieval_path, split_path, embedding_store, output, top_k):
     if len(samples) != len(rankings):
         raise ValueError("Dense rankings and split must contain the same number of queries")
     frame = pd.read_parquet(embedding_store, columns=["hash_id", "content"])
+    if frame.empty:
+        raise ValueError("The corpus must contain at least one passage")
+    if allow_small_corpus:
+        top_k = min(top_k, len(frame))
     by_content = dict(zip(frame["content"], frame["hash_id"]))
     if len(by_content) != len(frame) or frame["hash_id"].duplicated().any():
         raise ValueError("Corpus content and IDs must be unique")
@@ -58,9 +62,11 @@ def main():
     parser.add_argument("--embedding_store", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--top_k", type=int, default=200)
+    parser.add_argument("--allow_small_corpus", action="store_true",
+                        help="Use all available passages for a sample corpus smaller than top_k")
     args = parser.parse_args()
     print(json.dumps(build_cache(args.retrieval, args.split_data, args.embedding_store,
-                                args.output, args.top_k)))
+                                args.output, args.top_k, args.allow_small_corpus)))
 
 
 if __name__ == "__main__":

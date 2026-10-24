@@ -21,6 +21,34 @@ from prepare_data import clean_nq, normalize_mrqa, normalize_multihop, recover, 
 
 
 class DataTests(unittest.TestCase):
+    def test_bundled_sample_has_separate_splits_and_complete_evidence(self):
+        from prepare_sample import prepare_sample
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "sample"
+            report = prepare_sample(output)
+            self.assertEqual(report, dict(dataset="sample", corpus_passages=8, train=2, val=2, test=2))
+            corpus = json.loads((output / "sample_corpus.json").read_text())
+            contents = {(row["title"], row["text"]) for row in corpus}
+            ids, questions = set(), set()
+            for split in ("train", "val", "test"):
+                for sample in json.loads((output / f"{split}.json").read_text()):
+                    self.assertNotIn(sample["id"], ids)
+                    self.assertNotIn(sample["question"], questions)
+                    ids.add(sample["id"])
+                    questions.add(sample["question"])
+                    self.assertTrue(sample["reference"])
+                    support = [row for row in sample["contexts"] if row["is_supporting"]]
+                    self.assertEqual(len(support), 2)
+                    self.assertTrue(all((row["title"], row["text"]) in contents for row in support))
+            self.assertEqual(prepare_sample(output), report)
+            for name in ("train.json", "val.json", "test.json", "sample_corpus.json"):
+                self.assertEqual((output / name).read_bytes(), (ROOT / "datasets/sample" / name).read_bytes())
+            changed = output / "train.json"
+            changed.write_text("[]", encoding="utf-8")
+            with self.assertRaises(FileExistsError):
+                prepare_sample(output)
+            self.assertEqual(changed.read_text(encoding="utf-8"), "[]")
+
     def test_nq_clean_context_matches_source_rule(self):
         self.assertEqual(clean_nq("<P> A  B </P>\n<P>C</P>"), "A B C")
         self.assertEqual(clean_nq("[PAR] A <p>B</p>"), "[PAR] A <p>B</p>")
@@ -95,6 +123,31 @@ class DataTests(unittest.TestCase):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_default_cache_directory_is_dataset_scoped(self):
+        from coevirag.utils.config_utils import BaseConfig
+        self.assertEqual(Path(BaseConfig(dataset='sample').save_dir), Path('outputs/sample/cache/index'))
+        self.assertEqual(Path(BaseConfig().save_dir), Path('outputs/default/cache/index'))
+        self.assertEqual(BaseConfig(dataset='sample', save_dir='custom').save_dir, 'custom')
+
+    def test_ranker_training_rows_cover_unary_and_selector(self):
+        from coevirag.ranking.training import balanced_rows
+        labels = np.array([True, True, False])
+        features = np.arange(180, dtype=np.float32).reshape(3, 60)
+        pair = np.arange(153, dtype=np.float32).reshape(3, 51)
+        group = dict(indices=np.arange(3), labels=labels, anchor=0,
+                     scores=np.array([0.9, 0.6, 0.3], dtype=np.float32), pair_features=pair)
+        bundles = {'sample': dict(train=dict(features=features), train_groups=[group])}
+        for selector, width in ((False, 60), (True, 51)):
+            rows, mean, std, counts = balanced_rows(bundles, selector)
+            self.assertEqual(counts, {'sample': 1})
+            self.assertEqual(mean.shape, (width,))
+            self.assertTrue(np.isfinite(std).all())
+            self.assertEqual(rows[0]['x'].shape[1], width)
+            self.assertTrue(rows[0]['y'].any())
+            if selector:
+                self.assertEqual(rows[0]['y'].tolist(), [True, False])
+                self.assertTrue(np.isfinite(rows[0]['prior']).all())
+
     def test_public_coevirag_namespace(self):
         from coevirag import CoEviRAG
         from coevirag.CoEviRAG import CoEviRAG as Implementation
@@ -131,13 +184,19 @@ class ProtocolTests(unittest.TestCase):
             build_cache(ranking, split, store, output, 2)
             with np.load(output) as cache:
                 self.assertEqual(cache["passage_ids"].tolist(), [["outside-graph-a", "outside-graph-b"]])
+            with self.assertRaisesRegex(ValueError, "top_k unique"):
+                build_cache(ranking, split, store, output, 200)
+            build_cache(ranking, split, store, output, 200, allow_small_corpus=True)
+            with np.load(output) as cache:
+                self.assertEqual(cache["passage_ids"].shape, (1, 2))
+                self.assertEqual(json.loads(str(cache["metadata_json"].item()))["top_k"], 2)
             write_json(ranking, dict(results=[dict(question="Wrong?", docs=["A", "B"], scores=[.9, .8])]))
             with self.assertRaisesRegex(ValueError, "question order"):
                 build_cache(ranking, split, store, output, 2)
 
     def test_unary60_and_selector53_shapes(self):
-        from export_mixed_backend_cache import aligned_features
-        from train_set_aware_evidence_selector import conditional_features
+        from coevirag.ranking.export import aligned_features
+        from coevirag.ranking.features import conditional_features
         from coevirag.query_plan_evidence import query_plan_state_features, append_selection_progress
         components = [dict(passage="a", fact=1., paragraph=None, similarity=.8, agreement=0., content="A"),
                       dict(passage="b", fact=None, paragraph=.4, similarity=.6, agreement=0., content="B")]
@@ -150,7 +209,7 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(result.shape, (3, 53))
 
     def test_anchor_prefix_and_independent_tail(self):
-        from evaluate_iterative_evidence_selector import select_ranking
+        from coevirag.ranking.selection import select_ranking
         class ZeroSelector(torch.nn.Module):
             def forward(self, values):
                 return torch.zeros((len(values), 1))
@@ -166,7 +225,7 @@ class ProtocolTests(unittest.TestCase):
     def test_constructor_and_export_without_models(self):
         core = importlib.import_module("coevirag.CoEviRAG")
         from coevirag.utils.config_utils import BaseConfig
-        from run_frozen_fusion_sweep import build_components
+        from export_candidates import build_components
         with tempfile.TemporaryDirectory() as tmp, \
                 patch.object(core, "_get_llm_class", side_effect=lambda c: SimpleNamespace(global_config=c)), \
                 patch.object(core, "_get_embedding_model_class", return_value=lambda **kwargs: object()), \

@@ -80,6 +80,34 @@ class WorkflowTests(unittest.TestCase):
             self.assertIn("command", result)
             self.assertNotIn("steps", result)
 
+    def test_sample_uses_small_corpus_only_for_sample(self):
+        config = json.loads((ROOT / "configs/sample.json").read_text())
+        self.assertEqual(config["dataset"], "sample")
+        for key in ("policy_epochs", "tail_epochs", "initial_selector_epochs", "multistate_epochs"):
+            self.assertEqual(config[key], 1)
+        for stage in ("dense", "safety"):
+            self.assertIn("--allow_small_corpus", cli.stage_command(stage, config, "val"))
+            config["dataset"] = "hotpotqa"
+            self.assertNotIn("--allow_small_corpus", cli.stage_command(stage, config, "val"))
+            config["dataset"] = "sample"
+
+    def test_dataset_sample_selects_one_epoch_configuration(self):
+        for stage, options in (("train", []), ("retrieve", ["--with-qa"])):
+            automatic = json.loads(self.invoke(stage, "--dataset", "sample", *options, "--dry-run"))
+            explicit = json.loads(self.invoke(stage, "--config", str(ROOT / "configs/sample.json"),
+                                             *options, "--dry-run"))
+            self.assertEqual(automatic, explicit)
+        plan = json.loads(self.invoke("train", "--dataset", "sample", "--dry-run"))
+        training = plan["steps"][1]["command"]
+        self.assertEqual(training[training.index("--epochs") + 1], "1")
+
+    def test_explicit_config_takes_precedence_over_sample_default(self):
+        config = json.loads((ROOT / "configs/final.json").read_text())
+        result = json.loads(self.invoke("train", "--dataset", "sample", "--config",
+                                       str(ROOT / "configs/final.json"), "--dry-run"))
+        training = result["steps"][1]["command"]
+        self.assertEqual(training[training.index("--epochs") + 1], str(config["policy_epochs"]))
+
     def test_execution_order_and_default_gpu(self):
         with patch.object(cli, "validate_workflow"), \
                 patch.dict(cli.os.environ, {}, clear=True), \
@@ -101,7 +129,7 @@ class WorkflowTests(unittest.TestCase):
                 patch.object(cli.subprocess, "run") as run:
             self.invoke("retrieve", "--with-qa", "--split", "val")
         self.assertEqual(run.call_count, 6)
-        self.assertEqual(run.call_args.args[0][1], "scripts/eval_qa_from_retrieval.py")
+        self.assertEqual(run.call_args.args[0][1], "scripts/generate_answers.py")
         for call in run.call_args_list:
             self.assertEqual(call.kwargs["env"]["CUDA_VISIBLE_DEVICES"], "0")
 
@@ -126,8 +154,8 @@ class WorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary, patch.object(cli, "ROOT", Path(temporary)):
             config = {"dataset": "hotpotqa"}
             cli.validate_workflow("train", config)
-            for path in ("outputs/backend/hotpotqa/tail_history.json",
-                         "outputs/selector/hotpotqa/selector_history.json"):
+            for path in ("outputs/hotpotqa/models/rankers/tail_history.json",
+                         "outputs/hotpotqa/models/selector/selector_history.json"):
                 history = Path(temporary) / path
                 history.parent.mkdir(parents=True, exist_ok=True)
                 history.write_text("[]")
@@ -137,15 +165,29 @@ class WorkflowTests(unittest.TestCase):
 
     def test_complete_checkpoints_pass_preflight(self):
         with tempfile.TemporaryDirectory() as temporary, patch.object(cli, "ROOT", Path(temporary)):
-            files = ["outputs/policies/hotpotqa/best_policy.pth",
-                     "outputs/policies/hotpotqa/best_paragraph_policy.pth",
-                     "outputs/backend/hotpotqa/independent_tail_seed42.pth",
-                     "outputs/selector/hotpotqa/multistate_selector_seed42.pth"]
+            files = ["outputs/hotpotqa/models/agents/best_policy.pth",
+                     "outputs/hotpotqa/models/agents/best_paragraph_policy.pth",
+                     "outputs/hotpotqa/models/rankers/independent_tail_seed42.pth",
+                     "outputs/hotpotqa/models/selector/multistate_selector_seed42.pth"]
             for name in files:
                 path = Path(temporary) / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(b"synthetic checkpoint placeholder")
             cli.validate_workflow("retrieve", {"dataset": "hotpotqa"})
+
+    def test_all_stage_outputs_are_dataset_scoped(self):
+        config = json.loads((ROOT / "configs/final.json").read_text())
+        for dataset in cli.DATASETS:
+            config["dataset"] = dataset
+            for stage in cli.STAGES:
+                command = cli.stage_command(stage, config, "test")
+                for value in command:
+                    if value.startswith("outputs/"):
+                        self.assertTrue(value.startswith(f"outputs/{dataset}/"), (stage, value))
+                if stage in ("queries", "export", "retrieve", "qa"):
+                    self.assertIn(f"outputs/{dataset}/models/agents" if stage in ("queries", "export")
+                                  else f"outputs/{dataset}/results/{'qa/test_top5.json' if stage == 'qa' else 'retrieval/test.json'}",
+                                  command)
 
 
 if __name__ == "__main__":

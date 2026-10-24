@@ -3,8 +3,10 @@
 ## Configuration And Stages
 
 `configs/final.json` selects the dataset, device, API endpoint, and training
-budgets. Commands in the README use this configuration; `--dataset DATASET`
-overrides the dataset for one invocation. Keep it consistent across stages.
+budgets. `--dataset sample` automatically selects `configs/sample.json`;
+other dataset selections use `configs/final.json`. An explicit `--config PATH`
+takes precedence, and `--dataset DATASET` overrides its dataset name for one
+invocation. Keep the dataset consistent across stages.
 After installation, `coevirag` and `python -m coevirag` expose the same
 command interface as `python coevirag.py`.
 
@@ -88,10 +90,10 @@ reference selector checkpoints to reuse these statistics. For fresh training,
 the default `null` computes them from the current training data. NQ used
 freshly computed training-only statistics.
 
-The earlier `train_paragraph_evidence_ranker.py` and
-`train_set_aware_evidence_selector.py` interfaces support existing
-46D-export/initial-selector artifacts. The main pipeline uses
-`train_mixed_evidence_backend.py` for independent per-dataset training.
+The main pipeline uses `scripts/train_rankers.py` for the unary tail and
+initial selector, and `scripts/train_selector.py` for the final multistate
+selector. Shared features, cache readers, checkpoint loaders, and selection
+functions are implemented in `coevirag/ranking/`.
 
 Network parameter names and state-dict layouts are unchanged by the
 CoEviRAG namespace migration. Existing policy and ranking state dictionaries
@@ -101,35 +103,58 @@ ordered-ID recovery, and SHA-256 checks.
 
 ## Generated Files
 
-All generated artifacts belong under ignored `outputs/` directories.
-`D` denotes the configured dataset and `SPLIT` the question split.
+All generated artifacts belong under `outputs/D/`, where `D` is the configured
+dataset. This directory is ignored by Git. All intermediate caches are grouped
+under `cache/`; `SPLIT` denotes the question split.
 
 | Path | Contents |
 | --- | --- |
-| `outputs/D/` | OpenIE, RQRs, graph, and embedding stores |
-| `outputs/policies/D/` | Selected Fact/Paragraph policies and training state |
-| `outputs/backend_cache/D/train/` | Per-question training features |
-| `outputs/unified_v1/D/` | Validation/test candidate components |
-| `outputs/safety/SPLIT/D/` | Full-corpus dense rankings and safety cache |
-| `outputs/backend/D/` | Unary tail and initial selector |
-| `outputs/selector/D/` | Final multistate selector |
-| `outputs/retrieval/D/` | Passage rankings and retrieval metrics |
-| `outputs/qa/D/` | Answers and QA metrics |
+| `outputs/D/cache/index/` | OpenIE, RQRs, graph, embeddings, and LLM cache |
+| `outputs/D/models/agents/` | Selected Fact/Passage policies and training state |
+| `outputs/D/cache/candidates/train/` | Per-question training features |
+| `outputs/D/cache/candidates/SPLIT.json.gz` | Validation/test candidate components |
+| `outputs/D/cache/dense/SPLIT/` | Full-corpus dense rankings and safety cache |
+| `outputs/D/models/rankers/` | Unary tail and initial selector |
+| `outputs/D/models/selector/` | Final multistate selector |
+| `outputs/D/results/retrieval/` | Passage rankings and retrieval metrics |
+| `outputs/D/results/qa/` | Answers and QA metrics |
+| `outputs/D/logs/` | Saved run logs |
 
-## Offline Checks
+## Sample Test
+
+The prepared sample is included in `datasets/sample/`, with its original
+fictional source in `examples/sample.json`. Verify the sample files, train
+with the one-epoch configuration, and run retrieval and QA:
 
 ```bash
-CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 HF_HUB_OFFLINE=1 \
-  TRANSFORMERS_OFFLINE=1 MPLCONFIGDIR=/tmp/coevirag-mpl python tests/test_offline.py
-python tests/test_cli.py
-python coevirag.py retrieve --dry-run
+python scripts/prepare_sample.py
+python coevirag.py train --dataset sample
+python coevirag.py retrieve --dataset sample --with-qa
 ```
 
-The offline tests cover software interfaces and data contracts using synthetic
-data, CPU tensors, and mocked constructors, without model downloads or API
-calls. `tests/validate_release.py` additionally checks imports, command-line
-interfaces, and a clean exported tree. Real-data reconstruction has also been
-verified for the four main datasets; see the [data guide](DATA.md).
+The sample has eight passages and separate two-question train, validation,
+and test splits. Its configuration trains both navigation policies, the
+60D unary tail, the initial 51D selector, and the final 53D selector for one
+epoch each. Retrieval uses the same fixed-RQR evidence-selection workflow,
+followed by GPT-OSS-120B Top-5 answer generation. The sample-specific
+`--allow_small_corpus` option uses all available passages for dense retrieval;
+the four benchmark configurations retain their Top-200 requirement.
+
+This workflow was tested successfully on the bundled sample. Its outputs are:
+
+| Path | Contents |
+| --- | --- |
+| `outputs/sample/models/agents/` | Fact and Passage policy checkpoints |
+| `outputs/sample/models/rankers/` | Unary tail and initial selector |
+| `outputs/sample/models/selector/` | Final 53D selector |
+| `outputs/sample/results/retrieval/test_metrics.json` | Recall@K metrics |
+| `outputs/sample/results/retrieval/test.json` | Final ranked passages |
+| `outputs/sample/results/qa/test_top5.json` | Answers and EM/F1 metrics |
+
+Use the same model and API setup as the main workflow. The data-preparation
+command verifies existing sample files or generates them in an empty directory;
+it preserves locally modified data and reports a mismatch. For partial reruns,
+continue with the individual stages described above.
 
 ## Scope And Compatibility
 

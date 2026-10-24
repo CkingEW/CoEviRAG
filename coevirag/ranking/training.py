@@ -1,62 +1,12 @@
-# Modified for CoEviRAG: release scope, portable paths, or fixed-protocol guards.
-"""Balanced multi-dataset training of the existing 60D/51D evidence backend."""
-
-import argparse
+"""Per-dataset unary and initial-selector training and validation."""
 import json
-from pathlib import Path
-
 import numpy as np
 import torch
-
-from evaluate_iterative_evidence_selector import query_budgets, select_ranking, summarize
-from train_set_aware_evidence_selector import (
-    RECALL_KS, gold_denominators, load_component_cache, load_openie_metadata,
-    load_query_plans, load_unary_ranker, normalized_unary_prior,
-    prepare_groups, unary_scores,
-)
-from coevirag.query_plan_evidence import query_plan_slot_scores
-
-
-DATASETS = ("2wikimultihopqa", "hotpotqa", "musique", "mrqa_nq_fixed_1k")
-
-
-def assert_split_separation(datasets):
-    train, val = set(), set()
-    for dataset in datasets:
-        for split, destination in (("train", train), ("val", val)):
-            samples = json.loads(Path(f"datasets/{dataset}/{split}.json").read_text())
-            questions = [" ".join(row["question"].lower().split()) for row in samples]
-            if len(questions) != len(set(questions)):
-                print(f"DUPLICATE_QUESTIONS {dataset}/{split} "
-                      f"entries={len(questions)} unique={len(set(questions))}", flush=True)
-            destination.update(questions)
-    if train & val:
-        raise ValueError("Train/validation question overlap across datasets")
-
-
-def load_shards(root, split_path):
-    manifest = json.loads((root / "manifest.json").read_text())
-    samples = json.loads(split_path.read_text())
-    if manifest["questions"] != [row["question"] for row in samples]:
-        raise ValueError("Training manifest differs from split")
-    rows = {key: [] for key in ("base", "features", "labels", "passage_ids", "query_ids")}
-    for query_id, sample in enumerate(samples):
-        with np.load(root / f"{query_id:04d}.npz") as shard:
-            if str(shard["question"].item()) != sample["question"]:
-                raise ValueError("Training shard question mismatch")
-            for key in ("base", "features", "labels", "passage_ids"):
-                rows[key].append(shard[key])
-            rows["query_ids"].append(np.full(len(shard["labels"]), query_id, dtype=np.int64))
-    return {key: np.concatenate(value) for key, value in rows.items()}
-
-
-def make_model(dim, device, residual=False):
-    model = torch.nn.Sequential(torch.nn.Linear(dim, 16), torch.nn.ReLU(),
-                                torch.nn.Linear(16, 1)).to(device)
-    if residual:
-        torch.nn.init.zeros_(model[2].weight)
-        torch.nn.init.zeros_(model[2].bias)
-    return model
+from . import RECALL_KS
+from .features import normalized_unary_prior
+from .models import make_model, unary_scores
+from .selection import select_ranking, summarize
+from ..release_protocol import BENCHMARK_DATASETS as DATASETS
 
 
 def checkpoint(model, mean, std, epoch, selector=False, datasets=DATASETS):
@@ -211,34 +161,3 @@ def train_stage(bundles, root, epochs, batch_size, seed, selector=False, tail_ck
         print(f"EPOCH {stage} {epoch}/{epochs} macro={macro:.6f} best={best_score:.6f} {heads}",
               flush=True)
     return best
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Train independent 60D unary and initial 51D selector")
-    parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--cache_root", type=Path, default=Path("outputs/backend_cache"))
-    parser.add_argument("--datasets", choices=DATASETS, nargs=1, required=True)
-    parser.add_argument("--tail_epochs", type=int, default=30)
-    parser.add_argument("--selector_epochs", type=int, default=20)
-    parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--seed", type=int, default=42)
-    args = parser.parse_args()
-    if args.batch_size < 1 or min(args.tail_epochs, args.selector_epochs) < 0:
-        parser.error("Invalid batch size or epoch count")
-    from train_multistate_evidence_selector import load_bundle
-    assert_split_separation(args.datasets)
-    args.root.mkdir(parents=True, exist_ok=True)
-    if (args.root / "tail_history.json").exists():
-        parser.error("Choose a new backend directory")
-    torch.set_num_threads(4)
-    bundles = {d: load_bundle(d, args.cache_root, 0, 0) for d in args.datasets}
-    tail = train_stage(bundles, args.root, args.tail_epochs, args.batch_size, args.seed)
-    selector = train_stage(bundles, args.root, args.selector_epochs, args.batch_size,
-                           args.seed, selector=True, tail_ckpt=tail)
-    (args.root / "training_summary.json").write_text(json.dumps(dict(
-        datasets=args.datasets, tail_best_epoch=tail["epoch"],
-        selector_best_epoch=selector["epoch"], agents="frozen", repair=False), indent=2))
-
-
-if __name__ == "__main__":
-    main()

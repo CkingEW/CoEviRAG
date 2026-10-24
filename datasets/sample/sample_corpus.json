@@ -1,0 +1,34 @@
+[
+  {
+    "title": "Aster Institute",
+    "text": "Aster Institute is a research institute in the city of Linden."
+  },
+  {
+    "title": "Linden",
+    "text": "Linden is a city in the country of Norland."
+  },
+  {
+    "title": "Beacon Observatory",
+    "text": "Beacon Observatory is an astronomical observatory in the city of Cedar."
+  },
+  {
+    "title": "Cedar",
+    "text": "Cedar is a city in the country of Eastmere."
+  },
+  {
+    "title": "Mira Sol",
+    "text": "Mira Sol is a scientist who works at Aster Institute."
+  },
+  {
+    "title": "Jon Vale",
+    "text": "Jon Vale is an astronomer who works at Beacon Observatory."
+  },
+  {
+    "title": "Orion Prize",
+    "text": "The Orion Prize was founded by the scientist Mira Sol."
+  },
+  {
+    "title": "Vela Medal",
+    "text": "The Vela Medal was created by the astronomer Jon Vale."
+  }
+]

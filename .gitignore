@@ -9,7 +9,8 @@ __pycache__/
 API*.txt
 *credential*
 raw_datasets/
-datasets/
+/datasets/*
+!/datasets/sample/
 outputs/
 artifacts/
 *.pth

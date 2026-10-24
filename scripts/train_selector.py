@@ -1,5 +1,4 @@
-# Modified for CoEviRAG: release scope, portable paths, or fixed-protocol guards.
-"""Train 51D/53D selectors on inference-aligned selected-set states."""
+"""Train the final selector on inference-aligned selected-set states."""
 
 import argparse
 from collections import Counter
@@ -11,21 +10,15 @@ import time
 import numpy as np
 import torch
 
-from evaluate_iterative_evidence_selector import query_budgets
 from coevirag.query_plan_evidence import (
     append_selection_progress, selection_progress_values,
-    query_plan_slot_scores,
     query_plan_state_features,
-    mask_query_plan_features,
 )
-from train_mixed_evidence_backend import (
-    DATASETS, assert_split_separation, checkpoint, evaluate_backend,
-    load_shards, make_model,
-)
-from train_set_aware_evidence_selector import (
-    conditional_features, gold_denominators, load_component_cache,
-    load_openie_metadata, load_query_plans, normalized_unary_prior, prepare_groups,
-)
+from coevirag.ranking.data import assert_split_separation, load_bundle
+from coevirag.ranking.features import conditional_features, normalized_unary_prior
+from coevirag.ranking.models import make_model
+from coevirag.ranking.training import checkpoint, evaluate_backend
+from coevirag.release_protocol import BENCHMARK_DATASETS as DATASETS
 
 
 def state_features(data, group, selected, metadata, mean, std, budget=None, dynamic_plan=False,
@@ -279,49 +272,18 @@ def coverage_states(bundle, results):
     return dict(counts)
 
 
-def load_bundle(dataset, cache_root, train_limit, val_limit):
-    train_path, val_path = [Path(f"datasets/{dataset}/{split}.json") for split in ("train", "val")]
-    query_path = Path(f"outputs/{dataset}/query_triplets_cache.json")
-    metadata = load_openie_metadata(f"outputs/{dataset}/openie_results_ner_openai_gpt-oss-120b.json")
-    train = load_shards(cache_root / dataset / "train", train_path)
-    val = load_component_cache(
-        f"outputs/unified_v1/{dataset}/val100_components_seed42.json.gz", val_path, dataset,
-        dpr_safety_cache=f"outputs/safety/val/{dataset}/dpr_top200.npz",
-        dpr_safety_top_k=200, stream=True,
-    )
-    for data, limit in ((train, train_limit), (val, val_limit)):
-        if limit:
-            mask = data["query_ids"] < limit
-            for key in data:
-                data[key] = data[key][mask]
-    train_plans = load_query_plans(train_path, query_path, train["query_ids"])
-    plans = load_query_plans(val_path, query_path, val["query_ids"])
-    train_groups = prepare_groups(train, None, None, "cpu", metadata,
-                                  unary_mode="dpr", query_plans=train_plans)
-    val_groups = prepare_groups(val, None, None, "cpu", metadata,
-                                unary_mode="dpr", query_plans=plans)
-    for data, groups, query_plans in ((train, train_groups, train_plans), (val, val_groups, plans)):
-        for group in groups:
-            group["raw_plan"] = query_plans[group["query_id"]]
-            group["plan_scores"] = query_plan_slot_scores(
-                data["passage_ids"][group["indices"]], metadata, query_plans[group["query_id"]])
-    return dict(train=train, val=val, train_groups=train_groups, val_groups=val_groups,
-                metadata=metadata, plans=plans,
-                train_budgets=query_budgets(train_path, query_path, train["query_ids"]),
-                budgets=query_budgets(val_path, query_path, val["query_ids"]),
-                denominators=gold_denominators(val_path, val["query_ids"]))
 
 
 def run_dataset(args, dataset, source_root=None, bundle=None):
     started = time.monotonic()
-    root = args.root / dataset
+    root = args.root or args.output_root / dataset / "models/selector"
     root.mkdir(parents=True, exist_ok=True)
     if (root / "selector_history.json").exists():
         raise ValueError(f"Refusing to overwrite existing history in {root}")
     if bundle is None:
-        bundle = load_bundle(dataset, args.cache_root, args.train_limit, args.val_limit)
+        bundle = load_bundle(dataset, args.output_root, args.train_limit, args.val_limit)
     if source_root is None:
-        source_root = Path("outputs/backend") / dataset
+        source_root = args.source_root or args.output_root / dataset / "models/rankers"
     source_seed = getattr(args, "source_seed", 42)
     source_path = source_root / f"independent_selector_seed{source_seed}.pth"
     tail_path = source_root / f"independent_tail_seed{source_seed}.pth"
@@ -423,10 +385,10 @@ def run_dataset(args, dataset, source_root=None, bundle=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--cache_root", type=Path, default=Path("outputs/backend_cache"))
-    parser.add_argument("--source_root", type=Path, default=Path("outputs/backend"))
-    parser.add_argument("--datasets", nargs="+", choices=DATASETS, default=list(DATASETS))
+    parser.add_argument("--output_root", type=Path, default=Path("outputs"))
+    parser.add_argument("--root", type=Path, help="Override the dataset's models/selector directory")
+    parser.add_argument("--source_root", type=Path, help="Override the dataset's models/rankers directory")
+    parser.add_argument("--datasets", nargs="+", choices=(*DATASETS, "sample"), default=list(DATASETS))
     parser.add_argument("--mode", choices=("single", "multistate"), default="multistate")
     parser.add_argument("--state_reduction", choices=("uniform", "stage_balanced"),
                         default="uniform", help="Uniform states or equal initial/continuation stage mass")
@@ -459,6 +421,8 @@ def main():
         parser.error("Batch size must be positive; limits and epochs nonnegative")
     if len(args.datasets) != len(set(args.datasets)):
         parser.error("Datasets must be unique")
+    if len(args.datasets) > 1 and (args.root or args.source_root):
+        parser.error("Explicit model directories require exactly one dataset")
     if args.progress_normalization_root and not args.progress_features:
         parser.error("Frozen progress statistics require --progress_features")
     if args.dynamic_plan_normalization == "frozen" and not args.dynamic_query_plan:
@@ -468,7 +432,7 @@ def main():
     torch.set_num_threads(4)
     assert_split_separation(args.datasets)
     for dataset in args.datasets:
-        run_dataset(args, dataset, source_root=args.source_root / dataset)
+        run_dataset(args, dataset)
 
 
 if __name__ == "__main__":

@@ -557,10 +557,10 @@ class BaseConfig:
         metadata={"help": "Maximum number of query-relation-matched facts removed per evaluation query."}
     )
     
-    # Save dir (highest level directory)
+    # Graph, embedding, and LLM cache directory.
     save_dir: str = field(
         default=None,
-        metadata={"help": "Directory to save all related information. If it's given, will overwrite all default save_dir setups. If it's not given, then if we're not running specific datasets, default to `outputs`, otherwise, default to a dataset-customized output dir."}
+        metadata={"help": "Cache directory; defaults to outputs/<dataset>/cache/index."}
     )
     
     
@@ -593,7 +593,6 @@ class BaseConfig:
             raise ValueError("Repair is excluded from CoEviRAG")
         if self.openie_mode != "online":
             raise ValueError("Only remote OpenAI-compatible OpenIE is included")
-        if self.save_dir is None: # If save_dir not given
-            if self.dataset is None: self.save_dir = 'outputs' # running freely
-            else: self.save_dir = os.path.join('outputs', self.dataset) # customize your dataset's output dir here
+        if self.save_dir is None:
+            self.save_dir = os.path.join('outputs', self.dataset or 'default', 'cache', 'index')
         logger.debug(f"Initializing the highest level of save_dir to be {self.save_dir}")

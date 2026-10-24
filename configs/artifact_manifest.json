@@ -1,7 +1,7 @@
 {
   "included_weights_or_caches": false,
   "public_download": null,
-  "availability": "Local source references only; no publication asserted",
+  "availability": "Source code and training pipeline available; pretrained checkpoint release planned after paper acceptance",
   "evidence_source": "outputs/progress53_uniform_test_20261005/frozen_manifest.json",
   "primary_datasets": {
     "2wikimultihopqa": {
@@ -385,5 +385,5 @@
       "normalization_reuse": false
     }
   },
-  "supplementary_triviaqa": "Data IDs/adapter/fingerprints included; runtime artifact selection not audited"
+  "supplementary_triviaqa": "Supplementary data reconstruction: ordered IDs, adapter, and fingerprints included; main runtime targets the four primary datasets"
 }

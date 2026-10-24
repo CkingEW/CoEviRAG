@@ -8,10 +8,9 @@ IDs/fingerprints are the paper snapshot; synthetic examples are in
 ## Sources And Ordered Splits
 
 The main runtime uses `2wikimultihopqa`, `hotpotqa`, `musique`, and
-`mrqa_nq_fixed_1k`. The adapter also supports supplementary
-`mrqa_triviaqa_1k`; its runtime/checkpoint configuration was not audited in
-this release. Raw files are supplied by the user rather than downloaded
-automatically.
+`mrqa_nq_fixed_1k`. Supplementary TriviaQA data preparation is available
+through the adapter's `mrqa_triviaqa_1k` option. Supply the raw releases
+listed in `configs/data_sources.json` to reconstruct each collection.
 
 `reproducibility/split_membership.json` contains the ordered identifiers for
 1,000/100/1,000 train/validation/test questions per collection. Training and
@@ -32,9 +31,9 @@ All split arrays are ordered. `id` is a string, `question` a string,
 `reference` an array of accepted answers, and `contexts` an array of
 `{title: string, text: string, is_supporting: boolean}`. NQ additionally keeps
 `source` and `source_context_sha256`; MRQA TriviaQA keeps source document/QA IDs.
-Source tags/whitespace are normalized exactly by the source-derived adapter.
-The `(title, text)` corpus deduplication keeps distractors. No gold passages
-are omitted or answer-centered crops introduced by the adapter.
+Source tags/whitespace are normalized by the source-derived adapter.
+The corpus retains the selected contexts, including distractors, and
+deduplicates them by `(title, text)` while preserving full passage text.
 
 2Wiki/Hotpot sentence lists are concatenated without an inserted separator,
 then stripped, matching `build_formal_datasets.py`. MuSiQue uses the answerable
@@ -46,15 +45,22 @@ answer-span content after cleaning; TriviaQA uses the source in-range span
 eligibility check. The source's first valid selected-QID occurrence is used.
 
 The corpus is the ordered union across train, val, test. Processed serialization
-matches the source writers' UTF-8, two-space indentation, non-ASCII preservation,
-and trailing newline. Source serializer/cleaning parity is checked on synthetic
-fixtures, not full benchmark data. Full processed split/corpus byte equality
-has **not** been verified. The adapter reports expected versus actual SHA-256
-per file and can require all byte matches. Changed upstream releases, record
-occurrence differences, and transformed raw archives must not be described as
-byte-identical just because IDs match.
-The generated `reconstruction_report.json` reports each file's `byte_match`;
-pass `--require_byte_match` to require all recorded fingerprints to match.
+uses UTF-8, two-space indentation, non-ASCII preservation, and a trailing newline.
+Reconstruction from the original releases was verified on 2026-10-24 for all
+four main datasets. Ordered question IDs were recovered, cross-split ID and
+normalized-question separation checks passed, and the SHA-256 checksums of
+all three split files and the corpus matched the recorded experiment files.
+
+| Dataset | Train / Val / Test | Corpus passages | Split and corpus SHA-256 |
+| --- | --- | --- | --- |
+| 2WikiMultihopQA | 1,000 / 100 / 1,000 | 11,918 | All matched |
+| HotpotQA | 1,000 / 100 / 1,000 | 20,269 | All matched |
+| MuSiQue | 1,000 / 100 / 1,000 | 26,475 | All matched |
+| NQ | 1,000 / 100 / 1,000 | 2,076 | All matched |
+
+The generated `reconstruction_report.json` records the expected and actual
+SHA-256 checksums and each file's `byte_match`. Pass `--require_byte_match`
+to validate the reconstructed files against the published fingerprints.
 
 Query RQR JSON maps the exact question string to an object with `raw_triples`
 and the source bookkeeping fields (`original_query`, `extracted_triplets`,

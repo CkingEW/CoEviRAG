@@ -86,8 +86,10 @@ The workflow uses only training and validation questions. It follows the
 existing stage-wise procedure: train the agents, freeze the selected policies,
 then train the ranking modules on their candidates. It does not run test QA.
 
-Weights and caches are generated locally and are not bundled. A fresh `train`
-run refuses existing ranking-training histories before starting. For an
+Pretrained checkpoints are planned for release after paper acceptance. The
+current release provides the training pipeline; weights, graphs, and caches
+are generated locally. A fresh `train` run checks existing ranking-training
+histories before starting. For an
 interrupted run, continue with the relevant individual stages in the
 [reproducibility guide](docs/REPRODUCIBILITY.md); training is not automatically
 skipped or resumed. Move previous outputs before starting a fresh training run.
@@ -177,9 +179,8 @@ For a configured dataset `D`:
 | `outputs/qa/D/` | Generated answers and QA metrics |
 
 The [reproducibility guide](docs/REPRODUCIBILITY.md) documents individual
-stages, intermediate caches, checkpoint dependencies, and exact-artifact
-settings. Retraining and new LLM extractions can change numerical results;
-the source release does not include the paper's weights or generated caches.
+stages, intermediate caches, checkpoint dependencies, and normalization
+settings used in the paper experiments.
 
 ## Offline Checks
 

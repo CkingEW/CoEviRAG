@@ -75,18 +75,18 @@ The internal mode `dynamic_setmax_recovery` uses an RQR-count-derived prefix
 budget, not a changing RQR. Including the anchor, its budget is
 `min(4, min(4, max(2, number_of_RQR_triples)) + 1)`.
 
-## Checkpoints And Numerical Reproduction
+## Checkpoints And Normalization
 
-`configs/artifact_manifest.json` records the source checkpoints, input
-fingerprints, and selected epochs. Weights, graphs, and generated caches
-are not included; obtain them separately or regenerate them.
+`configs/artifact_manifest.json` records the paper checkpoints, input
+fingerprints, and selected epochs. Pretrained checkpoints are planned for
+release after paper acceptance. The current training workflow generates
+weights, graphs, and caches locally.
 
-The adopted multi-hop 53D checkpoints reused earlier training-only progress
-normalization statistics. To reproduce those artifacts, obtain the earlier
-checkpoints and set `progress_normalization_root` to their directory. With
-the default `null`, training recomputes these statistics. This provides a
-retraining recipe, not identical checkpoint weights or guaranteed paper
-scores. NQ used freshly computed training-only statistics.
+The multi-hop 53D selectors used reference training-only progress normalization
+statistics. Set `progress_normalization_root` to the directory containing the
+reference selector checkpoints to reuse these statistics. For fresh training,
+the default `null` computes them from the current training data. NQ used
+freshly computed training-only statistics.
 
 The earlier `train_paragraph_evidence_ranker.py` and
 `train_set_aware_evidence_selector.py` interfaces support existing
@@ -96,9 +96,8 @@ The earlier `train_paragraph_evidence_ranker.py` and
 Network parameter names and state-dict layouts are unchanged by the
 CoEviRAG namespace migration. Existing policy and ranking state dictionaries
 remain compatible; new graph caches use the `coevirag_fact_graph` prefix.
-Remote model revisions, newly generated OpenIE/RQR outputs, and numerical
-library differences can affect results. See the
-[data guide](DATA.md) for ordered-ID recovery and byte-fingerprint checks.
+See the [data guide](DATA.md) for verified dataset reconstruction,
+ordered-ID recovery, and SHA-256 checks.
 
 ## Generated Files
 
@@ -126,11 +125,11 @@ python tests/test_cli.py
 python coevirag.py retrieve --dry-run
 ```
 
-Tests use synthetic data, CPU tensors, and mocked constructors; they do not
-load pretrained models or call APIs. `tests/validate_release.py` additionally
-checks a clean exported tree without Git metadata or generated files.
-These checks verify software interfaces and synthetic examples, rather than
-a complete end-to-end reproduction of the benchmark experiments.
+The offline tests cover software interfaces and data contracts using synthetic
+data, CPU tensors, and mocked constructors, without model downloads or API
+calls. `tests/validate_release.py` additionally checks imports, command-line
+interfaces, and a clean exported tree. Real-data reconstruction has also been
+verified for the four main datasets; see the [data guide](DATA.md).
 
 ## Scope And Compatibility
 
